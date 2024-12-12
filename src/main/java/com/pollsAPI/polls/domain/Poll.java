@@ -25,6 +25,7 @@ public class Poll {
     @JoinColumn(name = "POLL_ID")
     @OrderBy
     @Size(min=2, max=6)
+    @NotEmpty
     private Set<Choice> choices;
 
 

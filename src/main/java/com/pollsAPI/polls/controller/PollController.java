@@ -69,7 +69,7 @@ public class PollController {
         verifyPoll(pollId);
         pollService.deletePollById(pollId);
         logger.info("Successfully deleted poll. ");
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
     }
 
