@@ -65,7 +65,7 @@ public class PollService {
     //Put (U)
     public Poll updatePoll(Long pollId, Poll poll){
             Poll p = pollRepository.findById(pollId).get();
-            if(poll.getPollId().equals(pollId)) {
+            if(p.getPollId().equals(pollId)) {
                 p.setQuestion(poll.getQuestion());
                 p.setChoices(poll.getChoices());
                 pollRepository.save(p);
