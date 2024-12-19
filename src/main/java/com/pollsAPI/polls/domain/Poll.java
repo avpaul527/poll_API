@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.NotFound;
 import org.springframework.lang.NonNull;
 
 import java.util.Set;
@@ -15,6 +16,7 @@ public class Poll {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "POLL_ID")
+    @NotFound
     private Long pollId;
 
     @Column(name = "QUESTION")

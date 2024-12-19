@@ -18,12 +18,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -34,29 +33,76 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
 
     @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException nre, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         ErrorDetail errorDetail = new ErrorDetail();
         errorDetail.setTimeStamp(new Date().getTime());
         errorDetail.setStatus(status.value());
         errorDetail.setTitle("Message Not Readable");
-        errorDetail.setDetail(ex.getMessage());
-        errorDetail.setDeveloperMessage(ex.getClass().getName());
+        errorDetail.setDetail(nre.getMessage());
+        errorDetail.setDeveloperMessage(nre.getClass().getName());
 
-        return handleExceptionInternal(ex, errorDetail, headers, status, request);
+        ValidationError validationError = new ValidationError();
+
+        validationError.setCode("Bad JSON Format");
+        validationError.setMessage(nre.getLocalizedMessage());
+
+        List<ValidationError> errors = new ArrayList<>();
+
+        errors.add(validationError);
+
+        errorDetail.getErrors().put("Message Not Readable", errors);
+
+
+        return handleExceptionInternal(nre, errorDetail, headers, status, request);
     }
 
     @Override
     public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException manve, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         ErrorDetail errorDetail = new ErrorDetail();
         errorDetail.setTimeStamp(new Date().getTime());
-        errorDetail.setStatus(status.value());
+        errorDetail.setStatus(HttpStatus.BAD_REQUEST.value());
         errorDetail.setTitle("Method argument not valid");
         errorDetail.setDetail(manve.getMessage());
         errorDetail.setDeveloperMessage(manve.getClass().getName());
 
+        Map<String, List<ValidationError>> validationErrors = new HashMap<>();
+
+        for (FieldError fieldError : manve.getBindingResult().getFieldErrors()) {
+            String fieldName = fieldError.getCode();
+            String errorMessage = messageSource.getMessage(fieldError, Locale.getDefault());
+
+            ValidationError validationError = new ValidationError(fieldName, errorMessage);
+
+            validationErrors.computeIfAbsent(fieldName, k -> new ArrayList<>()).add(validationError);
+        }
+
+        errorDetail.setErrors(validationErrors);
+
         return handleExceptionInternal(manve, errorDetail, headers, status, request);
     }
 
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException rnfe, HttpServletRequest request){
+
+        ErrorDetail errorDetail = new ErrorDetail();
+        errorDetail.setTimeStamp(new Date().getTime());
+        errorDetail.setStatus(HttpStatus.NOT_FOUND.value());
+        errorDetail.setTitle("Resource Not Found");
+        errorDetail.setDetail(rnfe.getMessage());
+        errorDetail.setDeveloperMessage(rnfe.getClass().getName());
+
+        ValidationError validationError = new ValidationError();
+        validationError.setCode("Poll not found");
+        validationError.setMessage(rnfe.toString());
+        List<ValidationError> errors = new ArrayList<>();
+
+        errors.add(validationError);
+
+        errorDetail.getErrors().put("Resource Not Found", errors);
+
+        return new ResponseEntity<>(errorDetail, null, HttpStatus.NOT_FOUND);
+    }
 
 
 //    @ExceptionHandler(MethodArgumentNotValidException.class)

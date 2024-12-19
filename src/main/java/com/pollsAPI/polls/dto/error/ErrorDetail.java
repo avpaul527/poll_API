@@ -1,5 +1,7 @@
 package com.pollsAPI.polls.dto.error;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +11,7 @@ public class ErrorDetail {
     private String title;
     private int status;
     private String detail;
-    private long timeStamp;
+    private String timeStamp;
     private String developerMessage;
     private Map<String, List<ValidationError>> errors = new HashMap<String, List<ValidationError>>();
 
@@ -40,12 +42,13 @@ public class ErrorDetail {
         this.detail = detail;
     }
 
-    public long getTimeStamp() {
+    public String getTimeStamp() {
         return timeStamp;
     }
 
     public void setTimeStamp(long timeStamp) {
-        this.timeStamp = timeStamp;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        this.timeStamp = sdf.format(new Date(timeStamp));
     }
 
     public String getDeveloperMessage() {
